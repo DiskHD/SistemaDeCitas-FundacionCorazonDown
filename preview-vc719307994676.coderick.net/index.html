@@ -1,0 +1,1186 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema de Citas - Fundación Corazón Down</title>
+    <meta name="description" content="Sistema de gestión de citas para la Fundación Corazón Down. Administra pacientes, terapeutas y citas de terapia." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/assets/index-D--k_0nr.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-NJUCer-a.css">
+    <script>
+        (() => {
+            const t = new URLSearchParams(window.location.search).get("sgv");
+            if (!t) return;
+
+            function n(e) {
+                try {
+                    if (!e) return e;
+                    const c = window.location.origin,
+                        s = new URL(String(e), c);
+                    return s.origin === c && s.searchParams.get("sgv") !== t ? (s.searchParams.set("sgv", t), s.href) : e;
+                } catch {
+                    return e;
+                }
+            }
+            const a = window.open;
+            window.open = function(...e) {
+                return e[0] && (e[0] = n(e[0])), a.apply(this, e);
+            };
+            const i = window.location.assign.bind(window.location);
+            window.location.assign = function(e) {
+                i(n(e));
+            };
+            const u = window.location.replace.bind(window.location);
+            window.location.replace = function(e) {
+                u(n(e));
+            };
+            const l = history.pushState;
+            history.pushState = function(...e) {
+                return e[2] && (e[2] = n(e[2])), l.apply(this, e);
+            };
+            const p = history.replaceState;
+            history.replaceState = function(...e) {
+                return e[2] && (e[2] = n(e[2])), p.apply(this, e);
+            }, document.addEventListener(
+                "click",
+                (e) => {
+                    const s = e.target ?.closest("a");
+                    if (!s || !s.href || s.href.startsWith("mailto:") || s.href.startsWith("tel:") || s.href.startsWith("javascript:"))
+                        return;
+                    const g = n(s.href),
+                        E = typeof g == "string" ? g : String(g);
+                    s.href !== E && (s.href = E);
+                }, !0
+            ), document.addEventListener("submit", (e) => {
+                const c = e.target;
+                if (!c) return;
+                let s = c.querySelector(
+                    'input[name="sgv"]'
+                );
+                s || (s = document.createElement("input"), s.type = "hidden", s.name = "sgv", c.appendChild(s)), s.value = t;
+            });
+            const f = () => {
+                document.querySelectorAll("a").forEach((e) => {
+                    if (e.href && !e.href.startsWith("javascript")) {
+                        const c = n(e.href);
+                        e.href = typeof c == "string" ? c : String(c);
+                    }
+                });
+            };
+            document.readyState === "complete" || document.readyState === "interactive" ? f() : document.addEventListener("DOMContentLoaded", f);
+        })();
+    </script>
+    <script>
+        var ve = Object.defineProperty;
+        var Re = (_, C, O) => C in _ ? ve(_, C, {
+            enumerable: !0,
+            configurable: !0,
+            writable: !0,
+            value: O
+        }) : _[C] = O;
+        var y = (_, C, O) => Re(_, typeof C != "symbol" ? C + "" : C, O);
+        (function() {
+            "use strict";
+            const _ = "sg-preview";
+            class C {
+                constructor(e) {
+                    y(this, "source");
+                    y(this, "allowedOrigins");
+                    y(this, "targetOrigin");
+                    y(this, "debug");
+                    y(this, "messageHandlers", new Map);
+                    if (!e.allowedOrigins ?.length) throw new Error("[EventCommunicator] allowedOrigins is required");
+                    this.source = e.source, this.allowedOrigins = e.allowedOrigins, this.targetOrigin = e.targetOrigin || "*", this.debug = e.debug || !1, e.messageHandlers && this.registerMessageHandlers(e.messageHandlers), e.domEvents && this.registerDOMEvents(e.domEvents), this.initMessageListener()
+                }
+                log(...e) {
+                    this.debug && console.log("[EventCommunicator]", ...e)
+                }
+                formatEventType(e) {
+                    return `${_}:${e}`
+                }
+                parseEventType(e) {
+                    const n = `${_}:`;
+                    return e.startsWith(n) ? e.slice(n.length) : null
+                }
+                isOriginAllowed(e) {
+                    return this.allowedOrigins.some(n => n === "*" ? !0 : e === n || e.endsWith(n))
+                }
+                initMessageListener() {
+                    window.addEventListener("message", e => {
+                        if (this.log("Message received from:", e.origin), !this.isOriginAllowed(e.origin)) {
+                            console.warn("[EventCommunicator] Wrong origin:", e.origin);
+                            return
+                        }
+                        const n = e.data;
+                        if (!n ?.type) return;
+                        const o = this.parseEventType(n.type);
+                        if (!o) return;
+                        this.log("Parsed event type:", o);
+                        const r = this.messageHandlers.get(o);
+                        r ? r(n.payload) : this.log("No handler for:", o)
+                    })
+                }
+                registerMessageHandlers(e) {
+                    Object.entries(e).forEach(([n, o]) => {
+                        this.messageHandlers.set(n, o)
+                    })
+                }
+                registerDOMEvents(e) {
+                    e.forEach(({
+                        event: n,
+                        handler: o,
+                        options: r
+                    }) => {
+                        window.addEventListener(n, o, r)
+                    })
+                }
+                getTargetWindow() {
+                    try {
+                        if (window.parent && window.parent !== window) return window.parent;
+                        if (window.top && window.top !== window) return window.top;
+                        if (window.opener) return window.opener
+                    } catch {
+                        if (window.parent && window.parent !== window) return window.parent
+                    }
+                    return null
+                }
+                send(e, n) {
+                    const o = this.getTargetWindow();
+                    if (!o) return;
+                    const r = {
+                        type: this.formatEventType(e),
+                        source: this.source,
+                        payload: n ?? null,
+                        timestamp: new Date().toISOString()
+                    };
+                    o.postMessage(r, this.targetOrigin)
+                }
+            }
+            const O = "visual-editor",
+                f = {
+                    ACTIVATE_INSPECTOR: "ACTIVATE_INSPECTOR",
+                    DEACTIVATE_INSPECTOR: "DEACTIVATE_INSPECTOR",
+                    MAKE_EDITABLE: "MAKE_EDITABLE",
+                    APPLY_STYLE: "APPLY_STYLE",
+                    CHANGE_TEXT_TYPE: "CHANGE_TEXT_TYPE",
+                    ADD_LINK: "ADD_LINK",
+                    INSERT_EMOJI: "INSERT_EMOJI",
+                    CHANGE_IMAGE_SRC: "CHANGE_IMAGE_SRC",
+                    SET_ALT_TEXT: "SET_ALT_TEXT",
+                    SHOW_IMAGE_LOADING: "SHOW_IMAGE_LOADING",
+                    HIDE_IMAGE_LOADING: "HIDE_IMAGE_LOADING",
+                    TOGGLE_DEBUG: "TOGGLE_DEBUG",
+                    CLEAR_SELECTION: "CLEAR_SELECTION"
+                },
+                u = {
+                    ELEMENT_SELECTED: "ELEMENT_SELECTED",
+                    ELEMENT_RECT_UPDATED: "ELEMENT_RECT_UPDATED",
+                    SELECTION_CLEARED: "SELECTION_CLEARED",
+                    CONTENT_CHANGED: "CONTENT_CHANGED",
+                    STYLE_APPLIED: "STYLE_APPLIED",
+                    TEXT_TYPE_CHANGE_REQUESTED: "TEXT_TYPE_CHANGE_REQUESTED",
+                    LINK_CHANGE_REQUESTED: "LINK_CHANGE_REQUESTED",
+                    EMOJI_INSERTED: "EMOJI_INSERTED",
+                    IMAGE_SRC_CHANGED: "IMAGE_SRC_CHANGED",
+                    ALT_TEXT_SET: "ALT_TEXT_SET",
+                    EDITING_TEXT: "EDITING_TEXT"
+                },
+                E = {
+                    LOC: "data-visual-edit-loc",
+                    COMPONENT: "data-visual-edit-component",
+                    EDITABLE: "data-visual-edit-editable",
+                    OVERLAY: "data-visual-edit-overlay",
+                    LABEL: "data-visual-edit-label",
+                    LABEL_POSITION: "data-visual-edit-label-position",
+                    DIMENSIONS: "data-visual-edit-dimensions"
+                },
+                m = {
+                    BOLD: "bold",
+                    ITALIC: "italic",
+                    UNDERLINE: "underline",
+                    LINE_THROUGH: "line-through",
+                    COLOR: "color",
+                    BACKGROUND_COLOR: "backgroundColor",
+                    TEXT_ALIGN: "textAlign",
+                    FONT_SIZE: "fontSize"
+                },
+                p = {
+                    HOVER: "hover",
+                    SELECTED: "selected",
+                    LOADING: "loading"
+                },
+                Z = 30,
+                ee = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "label", "b", "i", "strong", "em", "small", "mark", "del", "ins", "sub", "sup", "div", "li", "dt", "dd"];
+            let v = !1;
+            const F = "%c[Visual Editor]",
+                K = "color: #7c3aed; font-weight: bold;",
+                te = {
+                    CONTENT_CHANGED: "✏️",
+                    EMOJI_INSERTED: "😀",
+                    STYLE_APPLIED: "🎨",
+                    TEXT_TYPE_CHANGE_REQUESTED: "🔤",
+                    LINK_CHANGE_REQUESTED: "🔗",
+                    IMAGE_SRC_CHANGED: "🖼️",
+                    ALT_TEXT_SET: "🏷️"
+                },
+                ne = {
+                    CONTENT_CHANGED: "#059669",
+                    EMOJI_INSERTED: "#d97706",
+                    STYLE_APPLIED: "#2563eb",
+                    TEXT_TYPE_CHANGE_REQUESTED: "#7c3aed",
+                    LINK_CHANGE_REQUESTED: "#0891b2",
+                    IMAGE_SRC_CHANGED: "#be185d",
+                    ALT_TEXT_SET: "#be185d"
+                },
+                oe = (t, e) => {
+                    switch (t) {
+                        case "STYLE_APPLIED":
+                            {
+                                const n = e.style || e.after,
+                                    o = e.before,
+                                    r = e.after;
+                                return n === "fontSize" || e.fontSize ? `fontSize: ${o} → ${r} (preview: inline style)` : `${n}: ${o} → ${r}`
+                            }
+                        case "TEXT_TYPE_CHANGE_REQUESTED":
+                            {
+                                const n = e["tag before"],
+                                    o = e["tag after"],
+                                    r = e.fontSize,
+                                    i = `<${n}> → <${o}>`;
+                                return r ? `${i} (preview: inline ${r})` : i
+                            }
+                        case "CONTENT_CHANGED":
+                            return `"${String(e.after||"").slice(0,40)}"`;
+                        case "EMOJI_INSERTED":
+                            return `${e.emoji} added`;
+                        default:
+                            return Object.entries(e).slice(0, 2).map(([o, r]) => `${o}: ${r}`).join(", ")
+                    }
+                },
+                re = () => {
+                    v = !v, console.log(F + (v ? " %c🟢 Debug mode ENABLED" : " %c🔴 Debug mode DISABLED"), K, `color: ${v?"#16a34a":"#dc2626"}; font-weight: bold;`)
+                },
+                L = (t, e, n, o) => {
+                    if (!v) return;
+                    const r = ne[t] ?? "#6b7280",
+                        i = te[t] ?? "📝",
+                        a = n.tagName.toLowerCase(),
+                        c = oe(t, o);
+                    console.groupCollapsed(`${F} %c${i} PREVIEW ${t}%c  <${a}>  %c${c}`, K, `color: ${r}; font-weight: bold;`, "color: #6b7280; font-weight: normal;", "color: #0891b2; font-weight: normal;"), console.log("%cLocation", "font-weight: bold;", e), console.log("%cElement", "font-weight: bold;", `<${a}>`, n.className ? `class="${n.className}"` : "(no class)"), console.log("%cDetails", "font-weight: bold;", o), console.groupEnd()
+                },
+                se = t => {
+                    const e = document.createElement("div");
+                    return e.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" class="sg-icon-loader-circular" viewBox="25 25 50 50" style="width: ${t}px; height: ${t}px;">
+      <circle class="sg-icon-loader-path" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/>
+    </svg>
+  `, e
+                },
+                ie = () => `
+  .sg-icon-loader-circular {
+    animation: sg-preview-rotate 2s linear infinite;
+    transform-origin: center center;
+  }
+  .sg-icon-loader-path {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+    animation: sg-preview-dash 1.5s ease-in-out infinite, sg-preview-color 6s ease-in-out infinite;
+    stroke-linecap: round;
+  }
+  @keyframes sg-preview-rotate {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes sg-preview-dash {
+    0% {
+      stroke-dasharray: 1, 200;
+      stroke-dashoffset: 0;
+    }
+    50% {
+      stroke-dasharray: 89, 200;
+      stroke-dashoffset: -35px;
+    }
+    100% {
+      stroke-dasharray: 89, 200;
+      stroke-dashoffset: -124px;
+    }
+  }
+  @keyframes sg-preview-color {
+    100%,
+    0% {
+      stroke: #ff7061;
+    }
+    40% {
+      stroke: #21ab61;
+    }
+    66% {
+      stroke: #4343F0;
+    }
+    80%,
+    90% {
+      stroke: #ff7061;
+    }
+  }
+`,
+                R = new Map,
+                U = (t, e, n) => {
+                    D(e);
+                    const o = t.getBoundingClientRect(),
+                        r = window.getComputedStyle(t),
+                        i = document.createElement("div"),
+                        a = {
+                            position: "fixed",
+                            top: `${o.top}px`,
+                            left: `${o.left}px`,
+                            width: `${o.width}px`,
+                            height: `${o.height}px`,
+                            pointerEvents: "none",
+                            boxSizing: "border-box",
+                            zIndex: "999999",
+                            borderRadius: r.borderRadius || "0px"
+                        };
+                    if (e === "loading") {
+                        Object.assign(i.style, { ...a,
+                            zIndex: "2147483647",
+                            backdropFilter: "blur(4px)",
+                            background: "rgba(255, 255, 255, 0.5)",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px"
+                        });
+                        let c = 0,
+                            s = "12px",
+                            l = !1;
+                        if (o.width >= 240 && o.height >= 240 ? (c = 80, s = "14px", l = !0) : o.width >= 80 && o.height >= 80 ? (c = 52, s = "12px", l = !0) : o.width >= 40 && o.height >= 40 ? (c = 24, l = !1) : (c = 0, l = !1), c > 0) {
+                            const d = se(c);
+                            i.appendChild(d)
+                        }
+                        if (l && n ?.text) {
+                            const d = document.createElement("div");
+                            d.textContent = n.text, d.style.fontFamily = "Inter, sans-serif", d.style.fontSize = s, d.style.fontWeight = "400", d.style.color = "#212121", i.appendChild(d)
+                        }
+                    } else Object.assign(i.style, { ...a,
+                        boxShadow: "inset 0 0 0 1px #6164FF, 0 0 0 1px #4343F0"
+                    });
+                    if (i.setAttribute(E.OVERLAY, e), e === "hover") {
+                        const c = t.getAttribute(E.COMPONENT);
+                        if (c && (i.setAttribute(E.LABEL, c), i.setAttribute(E.LABEL_POSITION, o.top < Z ? "bottom" : "top")), t.tagName === "IMG") {
+                            const {
+                                width: s,
+                                height: l
+                            } = o;
+                            s >= 100 && l >= 100 && i.setAttribute(E.DIMENSIONS, `${Math.round(s)} x ${Math.round(l)} px`)
+                        }
+                    }
+                    document.body.appendChild(i), R.set(e, i)
+                },
+                G = (t, e) => {
+                    const n = R.get(e);
+                    if (!n || !t) return;
+                    const o = t.getBoundingClientRect(),
+                        r = window.getComputedStyle(t);
+                    Object.assign(n.style, {
+                        top: `${o.top}px`,
+                        left: `${o.left}px`,
+                        width: `${o.width}px`,
+                        height: `${o.height}px`,
+                        borderRadius: r.borderRadius || "0px"
+                    })
+                },
+                D = t => {
+                    const e = R.get(t);
+                    e ?.parentNode ?.removeChild(e), R.delete(t)
+                },
+                W = () => {
+                    document.querySelectorAll(`[${E.OVERLAY}]`).forEach(t => t.remove()), R.clear()
+                },
+                ae = () => {
+                    const t = document.createElement("style");
+                    t.textContent = `
+    .sg-cursor-text * {
+      cursor: text !important;
+    }
+    .sg-cursor-pointer * {
+      cursor: pointer !important;
+    }
+    [contenteditable="true"] {
+      outline: none !important;
+    }
+    [${E.OVERLAY}='hover']::before {
+      content: attr(${E.LABEL});
+      position: absolute;
+      left: 0;
+      background: #4343F0;
+      border-radius: 4px;
+      color: white;
+      padding: 2px 4px;
+      font-family: Inter;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 18px;
+    }
+    [${E.OVERLAY}='hover'][${E.LABEL_POSITION}='top']::before {
+      bottom: calc(100% + 4px);
+    }
+    [${E.OVERLAY}='hover'][${E.LABEL_POSITION}='bottom']::before {
+      top: calc(100% + 4px);
+    }
+    [${E.OVERLAY}='hover'][${E.DIMENSIONS}]::after {
+      content: attr(${E.DIMENSIONS});
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: #4343F0;
+      border-radius: 4px;
+      color: white;
+      padding: 2px 4px;
+      font-family: Inter;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 18px;
+    }
+    ${ie()}
+  `, document.head.appendChild(t)
+                };
+            let A = () => {},
+                b = () => {};
+            const ce = (t, e) => {
+                    A = t, b = e
+                },
+                Q = t => t ?.closest(`[${E.LOC}]`),
+                I = t => document.querySelector(`[${E.LOC}="${t}"]`),
+                X = t => {
+                    const e = t.getBoundingClientRect();
+                    return {
+                        top: e.top,
+                        left: e.left,
+                        width: e.width,
+                        height: e.height
+                    }
+                },
+                j = t => {
+                    const e = t.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                    if (!e) return t;
+                    const n = parseInt(e[1], 10),
+                        o = parseInt(e[2], 10),
+                        r = parseInt(e[3], 10);
+                    return `#${((1<<24)+(n<<16)+(o<<8)+r).toString(16).slice(1)}`
+                },
+                J = t => {
+                    const e = t.tagName.toLowerCase(),
+                        n = e === "a" ? t : t.closest("a"),
+                        o = t.hasAttribute("href") || !!n,
+                        r = t.getAttribute("href") || n ?.getAttribute("href") || void 0,
+                        i = t.getAttribute("target") || n ?.getAttribute("target") || void 0,
+                        a = t.getAttribute("rel") || n ?.getAttribute("rel") || void 0,
+                        c = t.hasAttribute("onclick") || t.getAttribute("type") === "submit",
+                        s = e === "button" ? t.getAttribute("type") || "button" : void 0,
+                        l = t.getAttribute(E.EDITABLE) === "true",
+                        d = window.getComputedStyle(t),
+                        P = j(d.color),
+                        z = j(d.backgroundColor),
+                        T = d.fontSize,
+                        S = t.className || "",
+                        Y = e === "img" ? t.getAttribute("alt") || "" : void 0,
+                        N = ee.includes(e),
+                        x = t.outerHTML,
+                        k = x.indexOf(">"),
+                        ye = k >= 0 ? x.slice(0, k + 1) : x;
+                    return {
+                        hasHref: o,
+                        href: r,
+                        target: i,
+                        rel: a,
+                        hasOnClick: c,
+                        buttonType: s,
+                        isEditable: l,
+                        isTextElement: N,
+                        computedColor: P,
+                        computedBackgroundColor: z,
+                        computedFontSize: T,
+                        classNames: S,
+                        openingTag: ye,
+                        alt: Y
+                    }
+                },
+                V = t => {
+                    const {
+                        loc: e
+                    } = t, n = I(e);
+                    if (!n) return;
+                    const o = n.innerText.trim();
+                    if (n.children.length > 0) {
+                        let a = null;
+                        for (const T of Array.from(n.childNodes))
+                            if (T.nodeType === Node.TEXT_NODE && (T.textContent || "").trim()) {
+                                a = T;
+                                break
+                            }
+                        if (!a) {
+                            const T = document.createTextNode("");
+                            n.appendChild(T), a = T
+                        }
+                        const c = a.textContent || "",
+                            s = document.createElement("span");
+                        s.textContent = c, s.contentEditable = "true", s.style.cssText = "outline:none;display:inline;min-width:2px;caret-color:auto;", a.parentNode ?.replaceChild(s, a);
+                        const l = document.createRange();
+                        l.selectNodeContents(s);
+                        const d = window.getSelection();
+                        d ?.removeAllRanges(), d ?.addRange(l), s.focus();
+                        const P = [];
+                        s.addEventListener("keydown", T => {
+                            if (T.key === " " && n.tagName === "BUTTON") {
+                                T.preventDefault(), document.execCommand("insertText", !1, " ");
+                                return
+                            }
+                            if ((T.ctrlKey || T.metaKey) && T.key === "z" && P.length > 0) {
+                                T.preventDefault(), P.pop() ?.();
+                                return
+                            }
+                            if (T.key === "Backspace") {
+                                const S = window.getSelection();
+                                if (S ?.isCollapsed && S ?.anchorOffset === 0) {
+                                    T.preventDefault();
+                                    const N = s.previousElementSibling;
+                                    if (N) {
+                                        const x = N.parentNode,
+                                            k = N.nextSibling;
+                                        P.push(() => {
+                                            k ? x ?.insertBefore(N, k) : x ?.appendChild(N)
+                                        }), N.remove()
+                                    }
+                                }
+                            }
+                        }), s.addEventListener("input", () => {
+                            const T = (s.textContent || "") !== c;
+                            A(u.EDITING_TEXT, {
+                                loc: e,
+                                isDirty: T
+                            }), b(n)
+                        });
+                        const z = () => {
+                            const T = Array.from(n.children).filter(N => N !== s).length,
+                                S = s.textContent || "",
+                                Y = document.createTextNode(s.textContent || "");
+                            s.parentNode ?.replaceChild(Y, s), S !== c && (L(u.CONTENT_CHANGED, e, n, {
+                                before: o,
+                                after: S
+                            }), A(u.CONTENT_CHANGED, {
+                                loc: e,
+                                newContent: S,
+                                remainingIconCount: T
+                            })), A(u.EDITING_TEXT, {
+                                loc: e,
+                                isDirty: !1
+                            }), requestAnimationFrame(() => b(n))
+                        };
+                        s.addEventListener("blur", z, {
+                            once: !0
+                        });
+                        return
+                    }
+                    n.setAttribute("contenteditable", "true"), n.style.caretColor = "auto", n.focus();
+                    const r = a => {
+                        a.key === " " && n.tagName === "BUTTON" && (a.preventDefault(), document.execCommand("insertText", !1, " "))
+                    };
+                    n.addEventListener("keydown", r);
+                    const i = () => {
+                        n.removeAttribute("contenteditable"), n.style.caretColor = "", n.removeEventListener("blur", i), n.removeEventListener("keydown", r);
+                        const a = n.innerText.trim();
+                        a !== o && (L(u.CONTENT_CHANGED, e, n, {
+                            before: o,
+                            after: a
+                        }), A(u.CONTENT_CHANGED, {
+                            loc: e,
+                            newContent: a
+                        })), A(u.EDITING_TEXT, {
+                            loc: e,
+                            isDirty: !1
+                        }), requestAnimationFrame(() => b(n))
+                    };
+                    n.addEventListener("blur", i)
+                },
+                le = (t, e) => {
+                    const n = document.createElement(e);
+                    for (const o of Array.from(t.attributes)) n.setAttribute(o.name, o.value);
+                    return n.innerHTML = t.innerHTML, t.replaceWith(n), n
+                },
+                Ee = t => {
+                    const {
+                        loc: e,
+                        tag: n,
+                        fontSize: o
+                    } = t, r = I(e);
+                    if (!r) return;
+                    const i = r.getAttribute(E.COMPONENT) || r.tagName.toLowerCase();
+                    r.setAttribute(E.COMPONENT, n);
+                    const a = le(r, n);
+                    o && (a.style.fontSize = o), L(u.TEXT_TYPE_CHANGE_REQUESTED, e, a, {
+                        "tag before": i,
+                        "tag after": n,
+                        fontSize: o ?? "(unchanged)"
+                    }), A(u.TEXT_TYPE_CHANGE_REQUESTED, {
+                        loc: e,
+                        tag: n,
+                        fontSize: o,
+                        classNames: a.className
+                    }), b(a)
+                },
+                de = t => {
+                    const {
+                        style: e,
+                        value: n,
+                        loc: o
+                    } = t, r = I(o);
+                    if (!r) return;
+                    const i = window.getComputedStyle(r);
+                    let a = n,
+                        c;
+                    switch (e) {
+                        case m.BOLD:
+                            {
+                                c = i.fontWeight;
+                                const s = parseInt(i.fontWeight, 10) >= 700 ? "normal" : "bold";r.style.fontWeight = s,
+                                a = s;
+                                break
+                            }
+                        case m.ITALIC:
+                            {
+                                c = i.fontStyle;
+                                const s = i.fontStyle === "italic" ? "normal" : "italic";r.style.fontStyle = s,
+                                a = s;
+                                break
+                            }
+                        case m.UNDERLINE:
+                            {
+                                c = i.textDecoration;
+                                const s = i.textDecoration.includes("underline") ? "none" : "underline";r.style.textDecoration = s,
+                                a = s;
+                                break
+                            }
+                        case m.LINE_THROUGH:
+                            {
+                                c = i.textDecoration;
+                                const s = i.textDecoration.includes("line-through") ? "none" : "line-through";r.style.textDecoration = s,
+                                a = s;
+                                break
+                            }
+                        case m.COLOR:
+                            {
+                                if (c = i.color, n) {
+                                    const s = [];
+                                    Array.from(r.children).forEach(l => {
+                                        const d = l;
+                                        d.style.color || s.push([d, window.getComputedStyle(d).color])
+                                    }), r.style.color = n, s.forEach(([l, d]) => {
+                                        l.style.color = d
+                                    })
+                                }
+                                break
+                            }
+                        case m.BACKGROUND_COLOR:
+                            c = i.backgroundColor, n && (r.style.backgroundColor = n);
+                            break;
+                        case m.TEXT_ALIGN:
+                            c = i.textAlign, n && (r.style.textAlign = n);
+                            break;
+                        case m.FONT_SIZE:
+                            c = i.fontSize, n && (r.style.fontSize = n);
+                            break
+                    }
+                    L(u.STYLE_APPLIED, o, r, {
+                        style: e,
+                        before: c ?? "(unknown)",
+                        after: a ?? "(unchanged)"
+                    }), A(u.STYLE_APPLIED, {
+                        loc: o,
+                        style: e,
+                        value: a
+                    }), b(r)
+                },
+                ue = t => {
+                    const {
+                        loc: e,
+                        href: n,
+                        target: o,
+                        rel: r
+                    } = t, i = I(e);
+                    if (!i) return;
+                    const a = i.closest("a") || (i.tagName.toLowerCase() === "a" ? i : null),
+                        c = a ? a.href : "(none)",
+                        s = a ?.getAttribute("target") ?? "(none)";
+                    if (a) a.href = n, o && a.setAttribute("target", o), r && a.setAttribute("rel", r);
+                    else {
+                        const l = document.createElement("a");
+                        l.href = n, o && l.setAttribute("target", o), r && l.setAttribute("rel", r), i.parentNode ?.insertBefore(l, i), l.appendChild(i)
+                    }
+                    L(u.LINK_CHANGE_REQUESTED, e, i, {
+                        "href before": c,
+                        "href after": n,
+                        "target before": s,
+                        "target after": o ?? "(none)",
+                        rel: r ?? "(none)"
+                    }), A(u.LINK_CHANGE_REQUESTED, {
+                        loc: e,
+                        href: n,
+                        target: o,
+                        rel: r
+                    })
+                },
+                Te = t => {
+                    const {
+                        loc: e,
+                        emoji: n
+                    } = t, o = I(e);
+                    if (!o) return;
+                    const r = o.innerText,
+                        a = o.querySelector('[contenteditable="true"]') || (o.isContentEditable ? o : null);
+                    if (a) {
+                        const s = window.getSelection();
+                        if (s && s.rangeCount > 0 && a.contains(s.anchorNode)) {
+                            const l = s.getRangeAt(0);
+                            l.deleteContents();
+                            const d = document.createTextNode(n);
+                            l.insertNode(d), l.setStartAfter(d), l.collapse(!0), s.removeAllRanges(), s.addRange(l)
+                        } else a.appendChild(document.createTextNode(n));
+                        a.dispatchEvent(new Event("input", {
+                            bubbles: !0
+                        }))
+                    } else o.appendChild(document.createTextNode(n));
+                    const c = o.innerText;
+                    L(u.EMOJI_INSERTED, e, o, {
+                        emoji: n,
+                        before: r,
+                        after: c
+                    }), A(u.EMOJI_INSERTED, {
+                        loc: e,
+                        emoji: n,
+                        newContent: c
+                    }), b(o), V({
+                        loc: e
+                    })
+                },
+                ge = t => {
+                    const {
+                        loc: e,
+                        src: n
+                    } = t, o = I(e);
+                    if (!o) return;
+                    const r = o.tagName.toLowerCase() === "img" ? o.src : "(not an img)";
+                    o.tagName.toLowerCase() === "img" && (o.src = n), L(u.IMAGE_SRC_CHANGED, e, o, {
+                        "src before": r,
+                        "src after": n
+                    }), A(u.IMAGE_SRC_CHANGED, {
+                        loc: e,
+                        src: n
+                    })
+                },
+                fe = t => {
+                    const {
+                        loc: e,
+                        alt: n
+                    } = t, o = I(e);
+                    if (!o) return;
+                    const r = o.tagName.toLowerCase() === "img" ? o.alt : "(not an img)";
+                    o.tagName.toLowerCase() === "img" && (o.alt = n), L(u.ALT_TEXT_SET, e, o, {
+                        "alt before": r,
+                        "alt after": n
+                    }), A(u.ALT_TEXT_SET, {
+                        loc: e,
+                        alt: n
+                    })
+                };
+            let M = !1,
+                g = null,
+                h = null,
+                $ = null,
+                H = null;
+            const w = t => {
+                    document.body.classList.remove("sg-cursor-text", "sg-cursor-pointer"), t && document.body.classList.add(`sg-cursor-${t}`)
+                },
+                B = (t, e) => {
+                    H ?.send(t, e)
+                },
+                pe = t => {
+                    if (t !== g)
+                        if (g && !document.contains(g)) g = t;
+                        else return;
+                    requestAnimationFrame(() => {
+                        G(t, p.SELECTED), B(u.ELEMENT_RECT_UPDATED, {
+                            rect: X(t)
+                        })
+                    })
+                },
+                Ae = () => {
+                    M = !0, w("pointer")
+                },
+                he = () => {
+                    M = !1, w(""), g = null, h = null, W()
+                },
+                Ne = t => {
+                    g = t, D(p.HOVER), h = null, U(t, p.SELECTED);
+                    const e = J(t);
+                    H.send(u.ELEMENT_SELECTED, {
+                        sourceLocation: t.getAttribute(E.LOC) || "",
+                        componentName: t.getAttribute(E.COMPONENT) || "",
+                        elementType: t.tagName.toLowerCase(),
+                        textContent: (t.innerText || "").trim(),
+                        rect: X(t),
+                        ...e
+                    });
+                    const n = e.isEditable && t.children.length === 0,
+                        o = e.isEditable && t.children.length > 0;
+                    if (n || o) {
+                        const r = t.getAttribute(E.LOC) || "";
+                        r && (V({
+                            loc: r
+                        }), requestAnimationFrame(() => G(t, p.SELECTED)))
+                    }
+                },
+                Ce = () => {
+                    D(p.SELECTED), g = null, B(u.SELECTION_CLEARED)
+                },
+                _e = t => {
+                    const e = window.getComputedStyle(t);
+                    if (t.tagName === "IMG") {
+                        const r = e.filter || "",
+                            i = parseFloat(e.opacity);
+                        return r.includes("blur") || i < .5
+                    }
+                    const n = (t.innerText || "").trim() === "" && t.children.length === 0,
+                        o = (e.backgroundImage || "").includes("gradient");
+                    return n && o
+                },
+                q = t => {
+                    const e = document.elementsFromPoint(t.clientX, t.clientY),
+                        n = new Set;
+                    for (const o of e) {
+                        const r = o.closest(`[${E.LOC}]`);
+                        if (!(!r || n.has(r)) && (n.add(r), !_e(r))) return r
+                    }
+                    return Q(t.target)
+                },
+                me = () => {
+                    W(), g = null, h = null
+                },
+                Le = t => {
+                    if (!t) {
+                        w("pointer");
+                        return
+                    }
+                    const {
+                        isEditable: e,
+                        isTextElement: n
+                    } = J(t);
+                    w(e && n ? "text" : "pointer")
+                },
+                Se = t => {
+                    if (!M) return;
+                    const e = q(t);
+                    if (Le(e), !e || e === g) {
+                        D(p.HOVER), h = null;
+                        return
+                    }
+                    e !== h && (h = e, U(e, p.HOVER))
+                },
+                be = t => {
+                    M && Q(t.target) === h && (D(p.HOVER), h = null, w("pointer"))
+                },
+                Ie = t => {
+                    if (!M || !H) return;
+                    const e = t,
+                        n = q(e);
+                    if (n) {
+                        if (e.preventDefault(), e.stopPropagation(), n === g) return;
+                        Ne(n)
+                    } else g && Ce()
+                },
+                Oe = () => {
+                    h && G(h, p.HOVER), g && (G(g, p.SELECTED), B(u.ELEMENT_RECT_UPDATED, {
+                        rect: X(g)
+                    })), $ && G($, p.LOADING)
+                },
+                De = t => {
+                    if (g) {
+                        $ = g;
+                        const {
+                            text: e
+                        } = t || {};
+                        U(g, p.LOADING, {
+                            text: e || "Uploading..."
+                        })
+                    }
+                },
+                we = () => {
+                    $ = null, D(p.LOADING)
+                };
+
+            function xe(t) {
+                H || (H = new C({
+                    source: O,
+                    allowedOrigins: t,
+                    messageHandlers: {
+                        [f.ACTIVATE_INSPECTOR]: Ae,
+                        [f.DEACTIVATE_INSPECTOR]: he,
+                        [f.MAKE_EDITABLE]: V,
+                        [f.APPLY_STYLE]: de,
+                        [f.CLEAR_SELECTION]: me,
+                        [f.CHANGE_TEXT_TYPE]: Ee,
+                        [f.ADD_LINK]: ue,
+                        [f.INSERT_EMOJI]: Te,
+                        [f.CHANGE_IMAGE_SRC]: ge,
+                        [f.SET_ALT_TEXT]: fe,
+                        [f.SHOW_IMAGE_LOADING]: De,
+                        [f.HIDE_IMAGE_LOADING]: we,
+                        [f.TOGGLE_DEBUG]: re
+                    },
+                    domEvents: [{
+                        event: "mouseover",
+                        handler: Se,
+                        options: !0
+                    }, {
+                        event: "mouseout",
+                        handler: be,
+                        options: !0
+                    }, {
+                        event: "click",
+                        handler: Ie,
+                        options: !0
+                    }, {
+                        event: "scroll",
+                        handler: Oe,
+                        options: !0
+                    }]
+                }), ce(B, pe), ae())
+            }
+            xe([".siteground.ai", ".sgdev.eu"])
+        })();
+    </script>
+    <script>
+        var E = Object.defineProperty;
+        var v = (c, i, s) => i in c ? E(c, i, {
+            enumerable: !0,
+            configurable: !0,
+            writable: !0,
+            value: s
+        }) : c[i] = s;
+        var l = (c, i, s) => v(c, typeof i != "symbol" ? i + "" : i, s);
+        (function() {
+            "use strict";
+            const c = "sg-preview";
+            class i {
+                constructor(e) {
+                    l(this, "source");
+                    l(this, "allowedOrigins");
+                    l(this, "targetOrigin");
+                    l(this, "debug");
+                    l(this, "messageHandlers", new Map);
+                    if (!e.allowedOrigins ?.length) throw new Error("[EventCommunicator] allowedOrigins is required");
+                    this.source = e.source, this.allowedOrigins = e.allowedOrigins, this.targetOrigin = e.targetOrigin || "*", this.debug = e.debug || !1, e.messageHandlers && this.registerMessageHandlers(e.messageHandlers), e.domEvents && this.registerDOMEvents(e.domEvents), this.initMessageListener()
+                }
+                log(...e) {
+                    this.debug && console.log("[EventCommunicator]", ...e)
+                }
+                formatEventType(e) {
+                    return `${c}:${e}`
+                }
+                parseEventType(e) {
+                    const r = `${c}:`;
+                    return e.startsWith(r) ? e.slice(r.length) : null
+                }
+                isOriginAllowed(e) {
+                    return this.allowedOrigins.some(r => r === "*" ? !0 : e === r || e.endsWith(r))
+                }
+                initMessageListener() {
+                    window.addEventListener("message", e => {
+                        if (this.log("Message received from:", e.origin), !this.isOriginAllowed(e.origin)) {
+                            console.warn("[EventCommunicator] Wrong origin:", e.origin);
+                            return
+                        }
+                        const r = e.data;
+                        if (!r ?.type) return;
+                        const t = this.parseEventType(r.type);
+                        if (!t) return;
+                        this.log("Parsed event type:", t);
+                        const o = this.messageHandlers.get(t);
+                        o ? o(r.payload) : this.log("No handler for:", t)
+                    })
+                }
+                registerMessageHandlers(e) {
+                    Object.entries(e).forEach(([r, t]) => {
+                        this.messageHandlers.set(r, t)
+                    })
+                }
+                registerDOMEvents(e) {
+                    e.forEach(({
+                        event: r,
+                        handler: t,
+                        options: o
+                    }) => {
+                        window.addEventListener(r, t, o)
+                    })
+                }
+                getTargetWindow() {
+                    try {
+                        if (window.parent && window.parent !== window) return window.parent;
+                        if (window.top && window.top !== window) return window.top;
+                        if (window.opener) return window.opener
+                    } catch {
+                        if (window.parent && window.parent !== window) return window.parent
+                    }
+                    return null
+                }
+                send(e, r) {
+                    const t = this.getTargetWindow();
+                    if (!t) return;
+                    const o = {
+                        type: this.formatEventType(e),
+                        source: this.source,
+                        payload: r ?? null,
+                        timestamp: new Date().toISOString()
+                    };
+                    t.postMessage(o, this.targetOrigin)
+                }
+            }
+            let s = null;
+
+            function d(n, e, r) {
+                return n.includes("Failed to fetch dynamically imported module") ? "module-load-error" : n === "Script error." ? "script-origin-error" : n.includes("ResizeObserver loop limit exceeded") ? "resize-observer-error" : n.includes("ReferenceError") ? "react-reference-error" : n.includes("TypeError") ? "react-type-error" : n.includes("is not defined") ? "react-reference-error" : n.includes("Cannot read prop") ? "react-property-error" : n.includes("Cannot access before initialization") ? "react-initialization-error" : n.includes("is not a function") ? "react-function-error" : r && r.includes("ErrorBoundary") ? "react-boundary-error" : e && e.includes("renderWithHooks") ? "react-render-error" : e && e.includes("updateFunctionComponent") ? "react-component-error" : e && e.includes("@react-refresh") ? "react-hmr-error" : "react-runtime-error"
+            }
+
+            function p(n) {
+                if (!n) return {
+                    file: null,
+                    line: null,
+                    column: null
+                };
+                const e = [/at\s+.*?\s+\(([^:]+):(\d+):(\d+)\)/, /([^:@\s]+\.(?:tsx?|jsx?)):(\d+):(\d+)/, /\(([^:]+):(\d+):(\d+)\)/, /(\w+)?@([^:]+):(\d+):(\d+)/];
+                for (const r of e) {
+                    const t = n.match(r);
+                    if (t) {
+                        const o = t[1] || t[2],
+                            a = parseInt(t[2] || t[3], 10),
+                            h = parseInt(t[3] || t[4], 10);
+                        return {
+                            file: o,
+                            line: a,
+                            column: h
+                        }
+                    }
+                }
+                return {
+                    file: null,
+                    line: null,
+                    column: null
+                }
+            }
+
+            function u(n) {
+                if (!s) return;
+                const e = p(n.stack),
+                    t = {
+                        type: d(n.message, n.stack, n.componentStack),
+                        message: n.message,
+                        file: e.file,
+                        line: e.line,
+                        column: e.column,
+                        stack: n.stack,
+                        componentStack: n.componentStack,
+                        environment: "development",
+                        errorSource: n.source,
+                        userAgent: navigator.userAgent,
+                        url: window.location.href
+                    };
+                s.send("RUNTIME_ERROR", t)
+            }
+            const f = n => {
+                    try {
+                        const e = n.target;
+                        if (e && e instanceof HTMLElement) {
+                            const r = e.tagName.toUpperCase(),
+                                t = e.src || e.href || "unknown";
+                            u({
+                                message: "Failed to load resource: " + r + " from " + t,
+                                source: "resource-loader",
+                                stack: null,
+                                componentStack: null
+                            })
+                        } else {
+                            const r = n;
+                            u({
+                                message: r.message || "Runtime error",
+                                source: "window-onerror",
+                                stack: r.error ? r.error.stack : null,
+                                componentStack: null
+                            })
+                        }
+                    } catch (e) {
+                        console.error("[SG Preview - Reporter] Internal error in onerror handler:", e)
+                    }
+                },
+                m = n => {
+                    try {
+                        const r = n.reason;
+                        u({
+                            message: r ?.message || r || "Unhandled promise rejection",
+                            source: "unhandled-rejection",
+                            stack: r ?.stack,
+                            componentStack: null
+                        })
+                    } catch (e) {
+                        console.error("[SG Preview - Reporter] Internal error in unhandledrejection handler:", e)
+                    }
+                },
+                g = console.error;
+
+            function w(n = ["*"]) {
+                s || (s = new i({
+                    source: "error-reporter",
+                    allowedOrigins: n,
+                    domEvents: [{
+                        event: "error",
+                        handler: f,
+                        options: !0
+                    }, {
+                        event: "unhandledrejection",
+                        handler: m
+                    }]
+                }), console.error = function(...e) {
+                    try {
+                        const r = e.join(" ");
+                        if (r.includes("Error handled by React Router default ErrorBoundary") || r.includes("React will try to recreate this component tree") || r.includes("The above error occurred in the") || r.includes("React Router caught the following error during render") || /Minified React error #\d+/.test(r) || r.includes("ResizeObserver loop limit exceeded")) {
+                            const t = e.find(a => a instanceof Error),
+                                o = e.find(a => typeof a == "object" && a && "componentStack" in a);
+                            u({
+                                message: t ? t.message : r,
+                                source: "console-error",
+                                stack: t ? t.stack : null,
+                                componentStack: o ?.componentStack ?? null
+                            })
+                        }
+                    } catch (r) {
+                        console.error("[SG Preview - Reporter] Internal error in console.error wrapper:", r)
+                    }
+                    g.apply(console, e)
+                }, console.log("[SG Preview - Runtime Reporter] Initialized."))
+            }
+            w(["*"])
+        })();
+    </script>
+</head>
+
+<body>
+    <div id="root"></div>
+</body>
+
+</html>
