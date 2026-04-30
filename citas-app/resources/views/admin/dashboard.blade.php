@@ -4,100 +4,130 @@
 
 @section('styles')
 <style>
-    .dashboard-header {
-        background: linear-gradient(135deg, #1e3a8a, #1e40af);
-        color: #fff;
-        border-radius: 12px;
-        padding: 2rem 2.25rem;
-        margin-bottom: 2rem;
-    }
-    .dashboard-header h1 { font-size: 1.75rem; margin-bottom: .4rem; }
-    .dashboard-header p  { opacity: .85; font-size: .95rem; }
-
-    .badge {
-        display: inline-block;
-        background: rgba(255,255,255,.25);
-        border: 1px solid rgba(255,255,255,.5);
-        border-radius: 20px;
-        font-size: .8rem;
-        padding: .2rem .8rem;
-        font-weight: 600;
-        margin-top: .6rem;
-    }
-
-    .cards-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.25rem;
-        margin-bottom: 2rem;
-    }
-    .stat-card {
-        background: #fff;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,.06);
-        border-left: 4px solid #1e40af;
-    }
-    .stat-card .label { font-size: .82rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
-    .stat-card .value { font-size: 2rem; font-weight: 700; color: #1e40af; margin-top: .3rem; }
-
-    .section-title { font-size: 1.1rem; font-weight: 700; color: #374151; margin-bottom: 1rem; }
-
-    .action-list { display: flex; flex-direction: column; gap: .6rem; }
-    .action-item {
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        padding: .9rem 1.2rem;
-        display: flex;
-        align-items: center;
-        gap: .75rem;
-        font-size: .92rem;
-        color: #374151;
-    }
-    .action-item .icon { font-size: 1.3rem; }
-    a.action-item {
-        text-decoration: none;
-        transition: background .15s, border-color .15s;
-    }
-    a.action-item:hover {
-        background: #eff6ff;
-        border-color: #1e40af;
-        color: #1e3a8a;
-    }
+    /* All shared tokens come from layouts/app.blade.php */
+    /* Admin accent overrides – cards keep red from global, action btn hover adjusted */
+    .action-btn:hover { border-color: var(--red); box-shadow: 0 0 0 3px rgba(255,23,23,.1); }
+    /* Completada card value in green to distinguish */
+    .stat-card[data-card="completadas"] .sc-value { color: var(--green); }
+    .stat-card[data-card="completadas"] { border-top-color: var(--green); }
+    .stat-card[data-card="completadas"] .sc-arrow { color: var(--green); }
 </style>
 @endsection
 
 @section('content')
-<div class="dashboard-header">
-    <h1>Panel de Administrador</h1>
-    <p>Bienvenido, <strong>{{ Auth::user()->name }}</strong>. Tienes acceso completo al sistema.</p>
-    <span class="badge">🔑 Administrador</span>
+
+<div class="dash-header">
+    <div>
+        <h1>⚙️ Panel de Administrador</h1>
+        <p>Bienvenido, <strong>{{ Auth::user()->name }}</strong>. Tienes acceso completo al sistema.</p>
+    </div>
+    <span class="dash-badge">🔑 Administrador</span>
 </div>
 
-<div class="cards-grid">
-    <div class="stat-card">
-        <div class="label">Usuarios</div>
-        <div class="value">—</div>
-    </div>
-    <div class="stat-card">
-        <div class="label">Citas hoy</div>
-        <div class="value">—</div>
-    </div>
-    <div class="stat-card">
-        <div class="label">Terapeutas</div>
-        <div class="value">—</div>
-    </div>
-    <div class="stat-card">
-        <div class="label">Recepcionistas</div>
-        <div class="value">—</div>
-    </div>
-</div>
-
-<p class="section-title">Acciones disponibles</p>
-<div class="action-list">
-    <a href="{{ route('admin.citas.index') }}" class="action-item">
-        <span class="icon">📅</span> Ver todas las citas
+{{-- ── Acciones ────────────────────────────────────────────────────────────── --}}
+<p class="section-title">Acciones rápidas</p>
+<div class="action-grid">
+    <a href="{{ route('admin.citas.index') }}" class="action-btn">
+        <span class="ab-icon">📅</span>
+        <div>
+            <div>Ver todas las citas</div>
+            <small style="font-weight:400;color:#9ca3af;">{{ $stats['total'] }} en total</small>
+        </div>
     </a>
 </div>
+<br>
+
+{{-- ── Cards interactivas ──────────────────────────────────────────────── --}}
+<div class="cards-grid">
+
+    {{-- Card: Citas hoy --}}
+    <div class="stat-card" onclick="toggleCard('card-hoy')">
+        <div class="sc-label">Citas hoy</div>
+        <div class="sc-value">{{ $stats['hoy'] }}</div>
+        <div class="sc-hint">Click para ver detalle</div>
+        <span class="sc-arrow" id="arrow-card-hoy">▼</span>
+        <div class="card-detail" id="card-hoy">
+            @if($stats['citas_hoy']->isEmpty())
+                <p class="detail-empty">Sin citas para hoy.</p>
+            @else
+                <table class="detail-table">
+                    <thead><tr><th>Paciente</th><th>Terapeuta</th><th>Hora</th></tr></thead>
+                    <tbody>
+                        @foreach($stats['citas_hoy'] as $c)
+                        <tr>
+                            <td>{{ $c->patient_name }}</td>
+                            <td>{{ $c->therapist->name ?? '—' }}</td>
+                            <td>{{ \Carbon\Carbon::parse($c->time)->format('H:i') }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+    </div>
+
+    {{-- Card: Pendientes --}}
+    <div class="stat-card" onclick="toggleCard('card-pendientes')">
+        <div class="sc-label">Pendientes</div>
+        <div class="sc-value">{{ $stats['pendientes'] }}</div>
+        <div class="sc-hint">Click para ver detalle</div>
+        <span class="sc-arrow" id="arrow-card-pendientes">▼</span>
+        <div class="card-detail" id="card-pendientes">
+            @if($stats['citas_pendientes']->isEmpty())
+                <p class="detail-empty">Sin citas pendientes.</p>
+            @else
+                <table class="detail-table">
+                    <thead><tr><th>Paciente</th><th>Terapeuta</th><th>Fecha</th></tr></thead>
+                    <tbody>
+                        @foreach($stats['citas_pendientes'] as $c)
+                        <tr>
+                            <td>{{ $c->patient_name }}</td>
+                            <td>{{ $c->therapist->name ?? '—' }}</td>
+                            <td>{{ \Carbon\Carbon::parse($c->date)->format('d/m/Y') }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+    </div>
+
+    {{-- Card: Completadas --}}
+    <div class="stat-card" onclick="toggleCard('card-completadas')">
+        <div class="sc-label">Completadas</div>
+        <div class="sc-value">{{ $stats['completadas'] }}</div>
+        <div class="sc-hint">Total histórico</div>
+        <span class="sc-arrow" id="arrow-card-completadas">▼</span>
+        <div class="card-detail" id="card-completadas">
+            <p class="detail-empty">{{ $stats['completadas'] }} cita(s) completada(s) en total.</p>
+        </div>
+    </div>
+
+    {{-- Card: Terapeutas --}}
+    <div class="stat-card" onclick="toggleCard('card-terapeutas')">
+        <div class="sc-label">Terapeutas</div>
+        <div class="sc-value">{{ $stats['terapeutas'] }}</div>
+        <div class="sc-hint">Usuarios registrados</div>
+        <span class="sc-arrow" id="arrow-card-terapeutas">▼</span>
+        <div class="card-detail" id="card-terapeutas">
+            <p class="detail-empty">{{ $stats['terapeutas'] }} terapeuta(s) · {{ $stats['recepcionistas'] }} recepcionista(s)</p>
+        </div>
+    </div>
+
+</div>
+
+
+
+@endsection
+
+@section('scripts')
+<script>
+function toggleCard(id) {
+    const detail = document.getElementById(id);
+    const arrow  = document.getElementById('arrow-' + id);
+    const card   = detail.closest('.stat-card');
+    detail.classList.toggle('open');
+    card.classList.toggle('open');
+}
+</script>
 @endsection

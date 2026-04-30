@@ -14,13 +14,111 @@ class AppointmentController extends Controller
         return User::where('role', 'terapeuta')->orderBy('name')->get();
     }
 
+    // ─── Utilidad: aplicar filtros comunes a una query ─────────────────────────
+    private function applyFilters($query, Request $request)
+    {
+        if ($request->filled('search')) {
+            $query->where('patient_name', 'like', '%' . $request->search . '%');
+        }
+        if ($request->filled('date')) {
+            $query->whereDate('date', $request->date);
+        }
+        if ($request->filled('status') && in_array($request->status, ['pendiente', 'completada', 'cancelada'])) {
+            $query->where('status', $request->status);
+        }
+        return $query;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DASHBOARDS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    public function adminDashboard()
+    {
+        $today = now()->toDateString();
+        $stats = [
+            'total'        => Appointment::count(),
+            'hoy'          => Appointment::whereDate('date', $today)->count(),
+            'pendientes'   => Appointment::where('status', 'pendiente')->count(),
+            'completadas'  => Appointment::where('status', 'completada')->count(),
+            'canceladas'   => Appointment::where('status', 'cancelada')->count(),
+            'terapeutas'   => User::where('role', 'terapeuta')->count(),
+            'recepcionistas' => User::where('role', 'recepcionista')->count(),
+            // Últimas 5 citas de hoy
+            'citas_hoy'    => Appointment::with('therapist')
+                                ->whereDate('date', $today)
+                                ->orderBy('time')
+                                ->limit(5)
+                                ->get(),
+            // Últimas 5 citas pendientes
+            'citas_pendientes' => Appointment::with('therapist')
+                                ->where('status', 'pendiente')
+                                ->orderBy('date')
+                                ->limit(5)
+                                ->get(),
+        ];
+        return view('admin.dashboard', compact('stats'));
+    }
+
+    public function recepcionistaDashboard()
+    {
+        $today = now()->toDateString();
+        $stats = [
+            'hoy'        => Appointment::whereDate('date', $today)->count(),
+            'pendientes' => Appointment::where('status', 'pendiente')->count(),
+            'completadas'=> Appointment::where('status', 'completada')->count(),
+            'canceladas' => Appointment::where('status', 'cancelada')->count(),
+            // Próximas citas del día con detalle
+            'citas_hoy'  => Appointment::with('therapist')
+                                ->whereDate('date', $today)
+                                ->orderBy('time')
+                                ->limit(5)
+                                ->get(),
+            // Próximas citas pendientes
+            'proximas'   => Appointment::with('therapist')
+                                ->where('status', 'pendiente')
+                                ->where('date', '>=', $today)
+                                ->orderBy('date')->orderBy('time')
+                                ->limit(5)
+                                ->get(),
+        ];
+        return view('recepcionista.dashboard', compact('stats'));
+    }
+
+    public function terapeutaDashboard()
+    {
+        $id    = auth()->id();
+        $today = now()->toDateString();
+        $stats = [
+            'hoy'        => Appointment::where('therapist_id', $id)->whereDate('date', $today)->count(),
+            'pendientes' => Appointment::where('therapist_id', $id)->where('status', 'pendiente')->count(),
+            'completadas'=> Appointment::where('therapist_id', $id)->where('status', 'completada')->count(),
+            'total'      => Appointment::where('therapist_id', $id)->count(),
+            // Próximas citas del terapeuta
+            'citas_hoy'  => Appointment::where('therapist_id', $id)
+                                ->whereDate('date', $today)
+                                ->orderBy('time')
+                                ->limit(5)
+                                ->get(),
+            'proximas'   => Appointment::where('therapist_id', $id)
+                                ->where('status', 'pendiente')
+                                ->where('date', '>=', $today)
+                                ->orderBy('date')->orderBy('time')
+                                ->limit(5)
+                                ->get(),
+        ];
+        return view('terapeuta.dashboard', compact('stats'));
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // RECEPCIONISTA
     // ═══════════════════════════════════════════════════════════════════════════
 
-    public function recepcionistaIndex()
+    public function recepcionistaIndex(Request $request)
     {
-        $appointments = Appointment::with(['therapist', 'creator'])->latest()->get();
+        $query = Appointment::with(['therapist', 'creator'])->latest('date');
+        $this->applyFilters($query, $request);
+        $appointments = $query->paginate(10)->withQueryString();
         return view('recepcionista.citas.index', compact('appointments'));
     }
 
@@ -87,18 +185,18 @@ class AppointmentController extends Controller
     // TERAPEUTA
     // ═══════════════════════════════════════════════════════════════════════════
 
-    public function terapeutaIndex()
+    public function terapeutaIndex(Request $request)
     {
-        $appointments = Appointment::with(['therapist', 'creator'])
+        $query = Appointment::with(['therapist', 'creator'])
             ->where('therapist_id', auth()->id())
-            ->latest()
-            ->get();
+            ->latest('date');
+        $this->applyFilters($query, $request);
+        $appointments = $query->paginate(10)->withQueryString();
         return view('terapeuta.citas.index', compact('appointments'));
     }
 
     public function terapeutaComplete(Appointment $appointment)
     {
-        // Solo puede completar sus propias citas
         if ($appointment->therapist_id !== auth()->id()) {
             abort(403);
         }
@@ -111,9 +209,11 @@ class AppointmentController extends Controller
     // ADMINISTRADOR
     // ═══════════════════════════════════════════════════════════════════════════
 
-    public function adminIndex()
+    public function adminIndex(Request $request)
     {
-        $appointments = Appointment::with(['therapist', 'creator'])->latest()->get();
+        $query = Appointment::with(['therapist', 'creator'])->latest('date');
+        $this->applyFilters($query, $request);
+        $appointments = $query->paginate(10)->withQueryString();
         return view('admin.citas.index', compact('appointments'));
     }
 

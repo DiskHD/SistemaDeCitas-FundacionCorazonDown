@@ -29,9 +29,7 @@ Route::post('/logout', [AuthController::class, 'logout'])
 
 // ─── Rutas del Administrador ──────────────────────────────────────────────────
 Route::middleware(['auth', 'role:administrador'])->group(function () {
-    Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+    Route::get('/admin/dashboard', [AppointmentController::class, 'adminDashboard'])->name('admin.dashboard');
 
     // Citas
     Route::get('/admin/citas',                       [AppointmentController::class, 'adminIndex'])->name('admin.citas.index');
@@ -44,9 +42,7 @@ Route::middleware(['auth', 'role:administrador'])->group(function () {
 
 // ─── Rutas de la Recepcionista ────────────────────────────────────────────────
 Route::middleware(['auth', 'role:recepcionista'])->group(function () {
-    Route::get('/recepcionista/dashboard', function () {
-        return view('recepcionista.dashboard');
-    })->name('recepcionista.dashboard');
+    Route::get('/recepcionista/dashboard', [AppointmentController::class, 'recepcionistaDashboard'])->name('recepcionista.dashboard');
 
     // Citas
     Route::get('/recepcionista/citas',                        [AppointmentController::class, 'recepcionistaIndex'])->name('recepcionista.citas.index');
@@ -59,9 +55,7 @@ Route::middleware(['auth', 'role:recepcionista'])->group(function () {
 
 // ─── Rutas del Terapeuta ──────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:terapeuta'])->group(function () {
-    Route::get('/terapeuta/dashboard', function () {
-        return view('terapeuta.dashboard');
-    })->name('terapeuta.dashboard');
+    Route::get('/terapeuta/dashboard', [AppointmentController::class, 'terapeutaDashboard'])->name('terapeuta.dashboard');
 
     // Citas
     Route::get('/terapeuta/citas',                          [AppointmentController::class, 'terapeutaIndex'])->name('terapeuta.citas.index');
