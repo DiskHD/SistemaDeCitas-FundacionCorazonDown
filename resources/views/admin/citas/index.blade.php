@@ -80,6 +80,9 @@
         .badge-pendiente  { background: #fff8e1; color: #b45309; border-color: #fde68a; }
         .badge-completada { background: var(--green-light); color: #3a6b00; border-color: #c3e88d; }
         .badge-cancelada  { background: var(--red-light); color: var(--red-dark); border-color: #ffb3b3; }
+        .badge-pagado     { background: var(--green-light); color: #3a6b00; border-color: #c3e88d; }
+        .badge-no_pagado  { background: #f3f4f6; color: var(--muted); border-color: #e0e0e0; }
+        .patient-meta { color: var(--muted); font-size: .75rem; line-height: 1.35; margin-top: .2rem; }
 
         /* Actions cell */
         .actions-cell { display: flex; flex-wrap: wrap; gap: .35rem; }
@@ -130,7 +133,7 @@
         <div class="filter-bar">
             <div class="fg">
                 <label>Paciente</label>
-                <input type="text" name="search" placeholder="Buscar nombre…" value="{{ request('search') }}">
+                <input type="text" name="search" placeholder="Nombre, tutor o telefono..." value="{{ request('search') }}">
             </div>
             <div class="fg" style="max-width:175px">
                 <label>Fecha</label>
@@ -145,6 +148,14 @@
                     <option value="cancelada"  {{ request('status') === 'cancelada'  ? 'selected' : '' }}>Cancelada</option>
                 </select>
             </div>
+            <div class="fg" style="max-width:155px">
+                <label>Pago</label>
+                <select name="payment_status">
+                    <option value="">Todos</option>
+                    <option value="pagado" {{ request('payment_status') === 'pagado' ? 'selected' : '' }}>Pagado</option>
+                    <option value="no_pagado" {{ request('payment_status') === 'no_pagado' ? 'selected' : '' }}>No pagado</option>
+                </select>
+            </div>
             <div class="filter-actions">
                 <button type="submit" class="btn btn-red">🔍 Buscar</button>
                 <a href="{{ route('admin.citas.index') }}" class="btn btn-ghost">✕ Limpiar</a>
@@ -156,7 +167,7 @@
         <span>
             Mostrando <strong>{{ $appointments->firstItem() ?? 0 }}–{{ $appointments->lastItem() ?? 0 }}</strong>
             de <strong>{{ $appointments->total() }}</strong> cita(s)
-            @if(request('search') || request('date') || request('status'))
+            @if(request('search') || request('date') || request('status') || request('payment_status'))
                 · <em>con filtros</em>
             @endif
         </span>
@@ -174,22 +185,44 @@
             <thead>
                 <tr>
                     <th>#</th><th>Paciente</th><th>Terapeuta</th><th>Creado por</th>
-                    <th>Fecha</th><th>Hora</th><th>Estado</th><th>Acciones</th>
+                    <th>Fecha</th><th>Hora</th><th>Estado</th><th>Pago</th><th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($appointments as $c)
+                @php
+                    $paymentStatus = $c->payment_status ?? 'no_pagado';
+                @endphp
                 <tr>
                     <td style="color:var(--muted);font-size:.78rem">{{ $c->id }}</td>
-                    <td><strong>{{ $c->patient_name }}</strong></td>
+                    <td>
+                        <strong>{{ $c->patient_name }}</strong>
+                        <div class="patient-meta">
+                            Edad: {{ $c->patient_age ?? '-' }} · Tel: {{ $c->phone ?? '-' }}<br>
+                            Tutor: {{ $c->guardian_name ?? '-' }}<br>
+                            Dom: {{ $c->address ?? '-' }}
+                        </div>
+                    </td>
                     <td>{{ $c->therapist->name ?? '—' }}</td>
                     <td>{{ $c->creator->name ?? '—' }}</td>
                     <td>{{ \Carbon\Carbon::parse($c->date)->format('d/m/Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($c->time)->format('H:i') }}</td>
                     <td><span class="badge badge-{{ $c->status }}">{{ ucfirst($c->status) }}</span></td>
                     <td>
+                        <span class="badge badge-{{ $paymentStatus }}">
+                            {{ $paymentStatus === 'pagado' ? 'Pagado' : 'No pagado' }}
+                        </span>
+                    </td>
+                    <td>
                         <div class="actions-cell">
                             <a href="{{ route('admin.citas.edit', $c) }}" class="btn btn-sm btn-warn-sm">✏ Editar</a>
+                            <form action="{{ route('admin.citas.payment', $c) }}" method="POST">
+                                @csrf @method('PATCH')
+                                <input type="hidden" name="payment_status" value="{{ $paymentStatus === 'pagado' ? 'no_pagado' : 'pagado' }}">
+                                <button class="btn btn-sm {{ $paymentStatus === 'pagado' ? 'btn-muted-sm' : 'btn-ok-sm' }}">
+                                    {{ $paymentStatus === 'pagado' ? 'No pagado' : 'Pagado' }}
+                                </button>
+                            </form>
                             @if($c->status === 'pendiente')
                                 <form action="{{ route('admin.citas.complete', $c) }}" method="POST" onsubmit="return confirm('¿Marcar como completada?')">
                                     @csrf @method('PATCH')

@@ -37,6 +37,7 @@ Route::middleware(['auth', 'role:administrador'])->group(function () {
     Route::put('/admin/citas/{appointment}',         [AppointmentController::class, 'adminUpdate'])->name('admin.citas.update');
     Route::patch('/admin/citas/{appointment}/cancel',[AppointmentController::class, 'adminCancel'])->name('admin.citas.cancel');
     Route::patch('/admin/citas/{appointment}/complete',[AppointmentController::class, 'adminComplete'])->name('admin.citas.complete');
+    Route::patch('/admin/citas/{appointment}/payment',[AppointmentController::class, 'adminPayment'])->name('admin.citas.payment');
     Route::delete('/admin/citas/{appointment}',      [AppointmentController::class, 'adminDestroy'])->name('admin.citas.destroy');
 });
 
@@ -51,6 +52,7 @@ Route::middleware(['auth', 'role:recepcionista'])->group(function () {
     Route::get('/recepcionista/citas/{appointment}/edit',     [AppointmentController::class, 'recepcionistaEdit'])->name('recepcionista.citas.edit');
     Route::put('/recepcionista/citas/{appointment}',          [AppointmentController::class, 'recepcionistaUpdate'])->name('recepcionista.citas.update');
     Route::patch('/recepcionista/citas/{appointment}/cancel', [AppointmentController::class, 'recepcionistaCancel'])->name('recepcionista.citas.cancel');
+    Route::patch('/recepcionista/citas/{appointment}/payment',[AppointmentController::class, 'recepcionistaPayment'])->name('recepcionista.citas.payment');
 });
 
 // ─── Rutas del Terapeuta ──────────────────────────────────────────────────────

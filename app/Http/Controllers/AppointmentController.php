@@ -18,7 +18,12 @@ class AppointmentController extends Controller
     private function applyFilters($query, Request $request)
     {
         if ($request->filled('search')) {
-            $query->where('patient_name', 'like', '%' . $request->search . '%');
+            $search = '%' . $request->search . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('patient_name', 'like', $search)
+                  ->orWhere('guardian_name', 'like', $search)
+                  ->orWhere('phone', 'like', $search);
+            });
         }
         if ($request->filled('date')) {
             $query->whereDate('date', $request->date);
@@ -26,7 +31,54 @@ class AppointmentController extends Controller
         if ($request->filled('status') && in_array($request->status, ['pendiente', 'completada', 'cancelada'])) {
             $query->where('status', $request->status);
         }
+        if ($request->filled('payment_status') && in_array($request->payment_status, ['no_pagado', 'pagado'])) {
+            $query->where('payment_status', $request->payment_status);
+        }
         return $query;
+    }
+
+    private function updatePaymentStatus(Request $request, Appointment $appointment, string $redirectRoute)
+    {
+        $validated = $request->validate([
+            'payment_status' => 'required|in:no_pagado,pagado',
+        ]);
+
+        $appointment->update($validated);
+
+        return redirect()->route($redirectRoute)
+                         ->with('success', 'Estado de pago actualizado.');
+    }
+
+    private function appointmentRules(bool $paymentRequired = true): array
+    {
+        return [
+            'patient_name' => 'required|string|max:255',
+            'patient_age'  => 'required|integer|min:0|max:120',
+            'address'      => 'required|string|max:255',
+            'phone'        => 'required|string|max:30',
+            'guardian_name' => 'required|string|max:255',
+            'therapist_id' => 'required|exists:users,id',
+            'date'         => 'required|date|after_or_equal:today',
+            'time'         => 'required',
+            'description'  => 'nullable|string',
+            'payment_status' => ($paymentRequired ? 'required' : 'nullable') . '|in:no_pagado,pagado',
+        ];
+    }
+
+    private function appointmentFields(): array
+    {
+        return [
+            'patient_name',
+            'patient_age',
+            'address',
+            'phone',
+            'guardian_name',
+            'therapist_id',
+            'date',
+            'time',
+            'description',
+            'payment_status',
+        ];
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -130,22 +182,13 @@ class AppointmentController extends Controller
 
     public function recepcionistaStore(Request $request)
     {
-        $request->validate([
-            'patient_name' => 'required|string|max:255',
-            'therapist_id' => 'required|exists:users,id',
-            'date'         => 'required|date|after_or_equal:today',
-            'time'         => 'required',
-            'description'  => 'nullable|string',
-        ]);
+        $validated = $request->validate($this->appointmentRules(false));
 
         Appointment::create([
-            'patient_name' => $request->patient_name,
-            'therapist_id' => $request->therapist_id,
+            ...$validated,
             'created_by'   => auth()->id(),
-            'date'         => $request->date,
-            'time'         => $request->time,
-            'description'  => $request->description,
             'status'       => 'pendiente',
+            'payment_status' => $validated['payment_status'] ?? 'no_pagado',
         ]);
 
         return redirect()->route('recepcionista.citas.index')
@@ -160,15 +203,9 @@ class AppointmentController extends Controller
 
     public function recepcionistaUpdate(Request $request, Appointment $appointment)
     {
-        $request->validate([
-            'patient_name' => 'required|string|max:255',
-            'therapist_id' => 'required|exists:users,id',
-            'date'         => 'required|date|after_or_equal:today',
-            'time'         => 'required',
-            'description'  => 'nullable|string',
-        ]);
+        $request->validate($this->appointmentRules());
 
-        $appointment->update($request->only(['patient_name', 'therapist_id', 'date', 'time', 'description']));
+        $appointment->update($request->only($this->appointmentFields()));
 
         return redirect()->route('recepcionista.citas.index')
                          ->with('success', 'Cita actualizada exitosamente.');
@@ -179,6 +216,11 @@ class AppointmentController extends Controller
         $appointment->update(['status' => 'cancelada']);
         return redirect()->route('recepcionista.citas.index')
                          ->with('success', 'Cita cancelada.');
+    }
+
+    public function recepcionistaPayment(Request $request, Appointment $appointment)
+    {
+        return $this->updatePaymentStatus($request, $appointment, 'recepcionista.citas.index');
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -225,15 +267,9 @@ class AppointmentController extends Controller
 
     public function adminUpdate(Request $request, Appointment $appointment)
     {
-        $request->validate([
-            'patient_name' => 'required|string|max:255',
-            'therapist_id' => 'required|exists:users,id',
-            'date'         => 'required|date|after_or_equal:today',
-            'time'         => 'required',
-            'description'  => 'nullable|string',
-        ]);
+        $request->validate($this->appointmentRules());
 
-        $appointment->update($request->only(['patient_name', 'therapist_id', 'date', 'time', 'description']));
+        $appointment->update($request->only($this->appointmentFields()));
 
         return redirect()->route('admin.citas.index')
                          ->with('success', 'Cita actualizada exitosamente.');
@@ -251,6 +287,11 @@ class AppointmentController extends Controller
         $appointment->update(['status' => 'completada']);
         return redirect()->route('admin.citas.index')
                          ->with('success', 'Cita marcada como completada.');
+    }
+
+    public function adminPayment(Request $request, Appointment $appointment)
+    {
+        return $this->updatePaymentStatus($request, $appointment, 'admin.citas.index');
     }
 
     public function adminDestroy(Appointment $appointment)

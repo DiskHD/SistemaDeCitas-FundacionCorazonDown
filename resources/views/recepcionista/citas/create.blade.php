@@ -56,6 +56,30 @@
             </div>
 
             <div class="form-group">
+                <label for="patient_age">Edad *</label>
+                <input type="number" id="patient_age" name="patient_age" value="{{ old('patient_age') }}" min="0" max="120">
+                @error('patient_age') <span class="error">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="address">Domicilio *</label>
+                <input type="text" id="address" name="address" value="{{ old('address') }}">
+                @error('address') <span class="error">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Telefono *</label>
+                <input type="text" id="phone" name="phone" value="{{ old('phone') }}">
+                @error('phone') <span class="error">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="guardian_name">Nombre del tutor *</label>
+                <input type="text" id="guardian_name" name="guardian_name" value="{{ old('guardian_name') }}">
+                @error('guardian_name') <span class="error">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group">
                 <label for="therapist_id">Terapeuta *</label>
                 <select id="therapist_id" name="therapist_id">
                     <option value="">-- Seleccionar terapeuta --</option>
@@ -84,6 +108,15 @@
                 <label for="description">Descripción / Notas</label>
                 <textarea id="description" name="description">{{ old('description') }}</textarea>
                 @error('description') <span class="error">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="payment_status">Estado de pago *</label>
+                <select id="payment_status" name="payment_status">
+                    <option value="no_pagado" {{ old('payment_status', 'no_pagado') === 'no_pagado' ? 'selected' : '' }}>No pagado</option>
+                    <option value="pagado" {{ old('payment_status') === 'pagado' ? 'selected' : '' }}>Pagado</option>
+                </select>
+                @error('payment_status') <span class="error">{{ $message }}</span> @enderror
             </div>
 
             <div class="btn-row">
