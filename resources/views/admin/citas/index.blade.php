@@ -196,14 +196,19 @@
                 <tr>
                     <td style="color:var(--muted);font-size:.78rem">{{ $c->id }}</td>
                     <td>
-                        <strong>{{ $c->patient_name }}</strong>
+                        <strong>{{ $c->patient->nombre_paciente ?? 'Sin paciente' }}</strong>
                         <div class="patient-meta">
-                            Edad: {{ $c->patient_age ?? '-' }} · Tel: {{ $c->phone ?? '-' }}<br>
-                            Tutor: {{ $c->guardian_name ?? '-' }}<br>
-                            Dom: {{ $c->address ?? '-' }}
+                            Edad: {{ $c->patient->edad ?? '-' }} · Tel: {{ $c->patient->telefono_tutor ?? '-' }}<br>
+                            Tutor: {{ $c->patient->nombre_tutor ?? '-' }}<br>
+                            Dom: {{ $c->patient->domicilio ?? '-' }}
                         </div>
                     </td>
-                    <td>{{ $c->therapist->name ?? '—' }}</td>
+                    <td>
+                        {{ $c->therapist->name ?? '—' }}
+                        @if($c->therapist?->tipoTerapeutaLabel())
+                            <div class="patient-meta">{{ $c->therapist->tipoTerapeutaLabel() }}</div>
+                        @endif
+                    </td>
                     <td>{{ $c->creator->name ?? '—' }}</td>
                     <td>{{ \Carbon\Carbon::parse($c->date)->format('d/m/Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($c->time)->format('H:i') }}</td>

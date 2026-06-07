@@ -35,6 +35,12 @@ class RegisterController extends Controller
             'email'                 => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password'              => ['required', 'confirmed', Password::min(8)],
             'role'                  => ['required', 'in:recepcionista,terapeuta'],
+            'tipo_terapeuta'        => [
+                'required_if:role,terapeuta',
+                'prohibited_unless:role,terapeuta',
+                'nullable',
+                'in:psicologia,terapia_fisica,terapia_ocupacional,lectoescritura,lenguaje',
+            ],
         ], [
             'name.required'         => 'El nombre es obligatorio.',
             'email.required'        => 'El correo electrónico es obligatorio.',
@@ -45,13 +51,20 @@ class RegisterController extends Controller
             'password.min'          => 'La contraseña debe tener al menos 8 caracteres.',
             'role.required'         => 'Selecciona un rol.',
             'role.in'               => 'El rol seleccionado no es válido.',
+            'tipo_terapeuta.required' => 'Selecciona el tipo de terapeuta.',
+            'tipo_terapeuta.required_if' => 'Selecciona el tipo de terapeuta.',
+            'tipo_terapeuta.prohibited_unless' => 'El tipo de terapeuta solo aplica para terapeutas.',
+            'tipo_terapeuta.in'     => 'El tipo de terapeuta seleccionado no es válido.',
         ]);
 
         $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role'     => $validated['role'],
+            'name'            => $validated['name'],
+            'email'           => $validated['email'],
+            'password'        => Hash::make($validated['password']),
+            'role'            => $validated['role'],
+            'tipo_terapeuta'  => $validated['role'] === 'terapeuta'
+                ? $validated['tipo_terapeuta']
+                : null,
         ]);
 
         Auth::login($user);

@@ -137,7 +137,7 @@
                 @foreach($appointments as $c)
                 <tr>
                     <td style="color:var(--muted);font-size:.78rem">{{ $c->id }}</td>
-                    <td><strong>{{ $c->patient_name }}</strong></td>
+                    <td><strong>{{ $c->patient->nombre_paciente ?? 'Sin paciente' }}</strong></td>
                     <td>{{ \Carbon\Carbon::parse($c->date)->format('d/m/Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($c->time)->format('H:i') }}</td>
                     <td class="desc-cell" title="{{ $c->description }}">{{ $c->description ?? '—' }}</td>

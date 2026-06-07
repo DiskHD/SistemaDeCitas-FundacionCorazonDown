@@ -16,6 +16,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'tipo_terapeuta',
     ];
 
     protected $hidden = [
@@ -58,6 +59,18 @@ class User extends Authenticatable
     public function isTerapeuta(): bool
     {
         return $this->role === 'terapeuta';
+    }
+
+    public function tipoTerapeutaLabel(): ?string
+    {
+        return match ($this->tipo_terapeuta) {
+            'psicologia' => 'Psicología',
+            'terapia_fisica' => 'Terapia Física',
+            'terapia_ocupacional' => 'Terapia Ocupacional',
+            'lectoescritura' => 'Lectoescritura',
+            'lenguaje' => 'Lenguaje',
+            default => null,
+        };
     }
 
     /**

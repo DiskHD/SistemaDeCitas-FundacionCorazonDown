@@ -11,17 +11,27 @@ class Appointment extends Model
 
     protected $fillable = [
         'patient_name',
+        'patient_id',
         'patient_age',
         'address',
         'phone',
         'guardian_name',
         'therapist_id',
+        'tipo_terapeuta',
         'created_by',
         'date',
         'time',
         'description',
+        'diagnosis',
+        'price',
+        'paid',
         'status',
         'payment_status',
+    ];
+
+    protected $casts = [
+        'paid' => 'boolean',
+        'price' => 'decimal:2',
     ];
 
     // ─── Relaciones ────────────────────────────────────────────────────────────
@@ -29,6 +39,11 @@ class Appointment extends Model
     public function therapist()
     {
         return $this->belongsTo(User::class, 'therapist_id');
+    }
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
     }
 
     public function creator()

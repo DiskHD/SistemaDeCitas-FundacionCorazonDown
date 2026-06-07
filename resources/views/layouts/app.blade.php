@@ -63,6 +63,14 @@
             font-size: 1rem;
         }
         .nav-right { display: flex; align-items: center; gap: 1rem; font-size: .88rem; }
+        .nav-link {
+            color: rgba(255,255,255,.9);
+            text-decoration: none;
+            font-weight: 700;
+            padding: .3rem .7rem;
+            border-radius: 6px;
+        }
+        .nav-link:hover { background: rgba(255,255,255,.15); color: #fff; }
         .nav-user {
             display: flex; align-items: center; gap: .5rem;
             background: rgba(0,0,0,.12);
@@ -216,6 +224,7 @@
         </span>
         @auth
         <div class="nav-right">
+            <a href="{{ route('patients.index') }}" class="nav-link">Pacientes</a>
             <div class="nav-user">
                 <span>{{ Auth::user()->name }}</span>
                 <span class="role-badge">{{ Auth::user()->role }}</span>

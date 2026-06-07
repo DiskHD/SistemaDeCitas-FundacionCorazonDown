@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\PatientController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Página principal ─────────────────────────────────────────────────────────
@@ -26,6 +27,16 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
+
+Route::middleware(['auth', 'role:administrador,recepcionista'])->group(function () {
+    Route::get('/patients/search', [PatientController::class, 'search'])->name('patients.search');
+    Route::get('/patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit');
+    Route::put('/patients/{patient}', [PatientController::class, 'update'])->name('patients.update');
+});
+
+Route::middleware(['auth', 'role:administrador,recepcionista,terapeuta'])->group(function () {
+    Route::resource('patients', PatientController::class)->only(['index', 'show']);
+});
 
 // ─── Rutas del Administrador ──────────────────────────────────────────────────
 Route::middleware(['auth', 'role:administrador'])->group(function () {

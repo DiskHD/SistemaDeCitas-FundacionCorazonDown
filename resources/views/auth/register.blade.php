@@ -153,6 +153,21 @@
             @enderror
         </div>
 
+        <div class="form-group" id="tipo-terapeuta-group" style="display:none">
+            <label for="tipo_terapeuta">Tipo de terapeuta</label>
+            <select id="tipo_terapeuta" name="tipo_terapeuta">
+                <option value="" disabled {{ old('tipo_terapeuta') ? '' : 'selected' }}>-- Selecciona la especialidad --</option>
+                <option value="psicologia" {{ old('tipo_terapeuta') === 'psicologia' ? 'selected' : '' }}>Psicología</option>
+                <option value="terapia_fisica" {{ old('tipo_terapeuta') === 'terapia_fisica' ? 'selected' : '' }}>Terapia Física</option>
+                <option value="terapia_ocupacional" {{ old('tipo_terapeuta') === 'terapia_ocupacional' ? 'selected' : '' }}>Terapia Ocupacional</option>
+                <option value="lectoescritura" {{ old('tipo_terapeuta') === 'lectoescritura' ? 'selected' : '' }}>Lectoescritura</option>
+                <option value="lenguaje" {{ old('tipo_terapeuta') === 'lenguaje' ? 'selected' : '' }}>Lenguaje</option>
+            </select>
+            @error('tipo_terapeuta')
+                <p class="error-msg">{{ $message }}</p>
+            @enderror
+        </div>
+
         <button type="submit" class="btn-primary">Registrarme</button>
     </form>
 
@@ -161,4 +176,27 @@
         <a href="{{ route('login') }}" class="link">Inicia sesión aquí</a>
     </p>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const role = document.getElementById('role');
+        const group = document.getElementById('tipo-terapeuta-group');
+        const tipo = document.getElementById('tipo_terapeuta');
+
+        const toggleTipoTerapeuta = () => {
+            const isTerapeuta = role.value === 'terapeuta';
+            group.style.display = isTerapeuta ? 'block' : 'none';
+            tipo.required = isTerapeuta;
+
+            if (!isTerapeuta) {
+                tipo.value = '';
+            }
+        };
+
+        role.addEventListener('change', toggleTipoTerapeuta);
+        toggleTipoTerapeuta();
+    });
+</script>
 @endsection

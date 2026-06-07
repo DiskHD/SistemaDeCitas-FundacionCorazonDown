@@ -22,6 +22,10 @@
         <span class="ab-icon">📅</span>
         <div><div>Ver mis citas</div><small style="font-weight:400;color:#9ca3af;">{{ $stats['pendientes'] }} pendientes</small></div>
     </a>
+    <a href="{{ route('patients.index') }}" class="action-btn">
+        <span class="ab-icon">👤</span>
+        <div><div>Ver mis pacientes</div><small style="font-weight:400;color:#9ca3af;">Solo pacientes asignados</small></div>
+    </a>
 </div>
 <br>
 
@@ -40,7 +44,7 @@
                     <tbody>
                         @foreach($stats['citas_hoy'] as $c)
                         <tr>
-                            <td>{{ $c->patient_name }}</td>
+                            <td>{{ $c->patient->nombre_paciente ?? 'Sin paciente' }}</td>
                             <td>{{ \Carbon\Carbon::parse($c->time)->format('H:i') }}</td>
                         </tr>
                         @endforeach
@@ -64,7 +68,7 @@
                     <tbody>
                         @foreach($stats['proximas'] as $c)
                         <tr>
-                            <td>{{ $c->patient_name }}</td>
+                            <td>{{ $c->patient->nombre_paciente ?? 'Sin paciente' }}</td>
                             <td>{{ \Carbon\Carbon::parse($c->date)->format('d/m/Y') }}</td>
                         </tr>
                         @endforeach

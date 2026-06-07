@@ -11,8 +11,8 @@
         .header h1 { font-size: 1.2rem; }
         .header nav a { color: #cce8d8; text-decoration: none; margin-left: 16px; font-size: 0.9rem; }
         .header nav a:hover { color: #fff; }
-        .container { max-width: 640px; margin: 40px auto; padding: 0 20px; }
-        .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 32px; }
+        .container { max-width: 700px; margin: 40px auto; padding: 0 20px; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 32px; margin-bottom: 20px; }
         .card h2 { font-size: 1.3rem; color: #2c6e49; margin-bottom: 24px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .form-group { margin-bottom: 18px; }
         label { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 5px; color: #555; }
@@ -26,7 +26,15 @@
         .btn-primary:hover { background: #1f4f34; }
         .btn-secondary { background: #eee; color: #555; }
         .btn-secondary:hover { background: #ddd; }
+        .btn-info { background: #3498db; color: #fff; }
+        .btn-info:hover { background: #2980b9; }
+        .btn-sm { padding: 6px 14px; font-size: 0.85rem; }
         .logout-btn { background: transparent; border: 1px solid #cce8d8; color: #cce8d8; padding: 6px 14px; border-radius: 5px; cursor: pointer; font-size: 0.88rem; }
+        .patient-info { background: #eaf6ee; border: 1px solid #c9e5d2; border-radius: 6px; padding: 16px; }
+        .patient-info h3 { color: #2c6e49; font-size: 1.1rem; margin-bottom: 12px; }
+        .patient-info p { color: #555; font-size: 0.88rem; margin: 4px 0; }
+        .patient-info strong { color: #333; }
+        .section-title { font-size: 1rem; font-weight: 600; color: #2c6e49; margin: 24px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; }
     </style>
 </head>
 <body>
@@ -44,45 +52,33 @@
 
 <div class="container">
     <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 style="margin: 0; border: none; padding: 0;">Información del Paciente</h2>
+            <a href="{{ route('patients.edit', $appointment->patient) }}" class="btn btn-info btn-sm">
+                Editar paciente
+            </a>
+        </div>
+
+        <div class="patient-info">
+            <h3>{{ $appointment->patient->nombre_paciente }}</h3>
+            <p><strong>Edad:</strong> {{ $appointment->patient->edad ?? 'No especificado' }} años</p>
+            <p><strong>Tutor:</strong> {{ $appointment->patient->nombre_tutor ?? 'No especificado' }}</p>
+            <p><strong>Teléfono del tutor:</strong> {{ $appointment->patient->telefono_tutor ?? 'No especificado' }}</p>
+            <p><strong>Email del tutor:</strong> {{ $appointment->patient->email_tutor ?? 'No especificado' }}</p>
+            <p><strong>Domicilio:</strong> {{ $appointment->patient->domicilio ?? 'No especificado' }}</p>
+            @if($appointment->patient->nota_paciente)
+                <p><strong>Nota:</strong> {{ $appointment->patient->nota_paciente }}</p>
+            @endif
+        </div>
+    </div>
+
+    <div class="card">
         <h2>Editar Cita #{{ $appointment->id }}</h2>
 
         <form action="{{ route('recepcionista.citas.update', $appointment) }}" method="POST">
             @csrf @method('PUT')
 
-            <div class="form-group">
-                <label for="patient_name">Nombre del Paciente *</label>
-                <input type="text" id="patient_name" name="patient_name"
-                       value="{{ old('patient_name', $appointment->patient_name) }}">
-                @error('patient_name') <span class="error">{{ $message }}</span> @enderror
-            </div>
-
-            <div class="form-group">
-                <label for="patient_age">Edad *</label>
-                <input type="number" id="patient_age" name="patient_age"
-                       value="{{ old('patient_age', $appointment->patient_age) }}" min="0" max="120">
-                @error('patient_age') <span class="error">{{ $message }}</span> @enderror
-            </div>
-
-            <div class="form-group">
-                <label for="address">Domicilio *</label>
-                <input type="text" id="address" name="address"
-                       value="{{ old('address', $appointment->address) }}">
-                @error('address') <span class="error">{{ $message }}</span> @enderror
-            </div>
-
-            <div class="form-group">
-                <label for="phone">Telefono *</label>
-                <input type="text" id="phone" name="phone"
-                       value="{{ old('phone', $appointment->phone) }}">
-                @error('phone') <span class="error">{{ $message }}</span> @enderror
-            </div>
-
-            <div class="form-group">
-                <label for="guardian_name">Nombre del tutor *</label>
-                <input type="text" id="guardian_name" name="guardian_name"
-                       value="{{ old('guardian_name', $appointment->guardian_name) }}">
-                @error('guardian_name') <span class="error">{{ $message }}</span> @enderror
-            </div>
+            <input type="hidden" name="patient_id" value="{{ $appointment->patient_id }}">
 
             <div class="form-group">
                 <label for="therapist_id">Terapeuta *</label>
@@ -91,7 +87,7 @@
                     @foreach($therapists as $t)
                         <option value="{{ $t->id }}"
                             {{ old('therapist_id', $appointment->therapist_id) == $t->id ? 'selected' : '' }}>
-                            {{ $t->name }}
+                            {{ $t->name }}{{ $t->tipoTerapeutaLabel() ? ' (' . $t->tipoTerapeutaLabel() . ')' : '' }}
                         </option>
                     @endforeach
                 </select>
@@ -120,9 +116,22 @@
             </div>
 
             <div class="form-group">
+                <label for="diagnosis">Diagnóstico</label>
+                <textarea id="diagnosis" name="diagnosis">{{ old('diagnosis', $appointment->diagnosis) }}</textarea>
+                @error('diagnosis') <span class="error">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="price">Precio *</label>
+                <input type="number" id="price" name="price"
+                       value="{{ old('price', $appointment->price ?? 0) }}" min="0" step="0.01">
+                @error('price') <span class="error">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group">
                 <label for="payment_status">Estado de pago *</label>
                 <select id="payment_status" name="payment_status">
-                    <option value="no_pagado" {{ old('payment_status', $appointment->payment_status ?? 'no_pagado') === 'no_pagado' ? 'selected' : '' }}>No pagado</option>
+                    <option value="no_pagado" {{ old('payment_status', $appointment->payment_status ?? 'no_pagado') === 'no_pagado' ? 'selected' : '' }}>Pendiente de pago</option>
                     <option value="pagado" {{ old('payment_status', $appointment->payment_status ?? 'no_pagado') === 'pagado' ? 'selected' : '' }}>Pagado</option>
                 </select>
                 @error('payment_status') <span class="error">{{ $message }}</span> @enderror

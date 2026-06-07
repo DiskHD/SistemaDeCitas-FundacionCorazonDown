@@ -34,6 +34,13 @@
             <small style="font-weight:400;color:#9ca3af;">{{ $stats['total'] }} en total</small>
         </div>
     </a>
+    <a href="{{ route('patients.index') }}" class="action-btn">
+        <span class="ab-icon">👤</span>
+        <div>
+            <div>Ver pacientes</div>
+            <small style="font-weight:400;color:#9ca3af;">Perfiles e historial clínico</small>
+        </div>
+    </a>
 </div>
 <br>
 
@@ -55,7 +62,7 @@
                     <tbody>
                         @foreach($stats['citas_hoy'] as $c)
                         <tr>
-                            <td>{{ $c->patient_name }}</td>
+                            <td>{{ $c->patient->nombre_paciente ?? 'Sin paciente' }}</td>
                             <td>{{ $c->therapist->name ?? '—' }}</td>
                             <td>{{ \Carbon\Carbon::parse($c->time)->format('H:i') }}</td>
                         </tr>
@@ -81,7 +88,7 @@
                     <tbody>
                         @foreach($stats['citas_pendientes'] as $c)
                         <tr>
-                            <td>{{ $c->patient_name }}</td>
+                            <td>{{ $c->patient->nombre_paciente ?? 'Sin paciente' }}</td>
                             <td>{{ $c->therapist->name ?? '—' }}</td>
                             <td>{{ \Carbon\Carbon::parse($c->date)->format('d/m/Y') }}</td>
                         </tr>
