@@ -2,120 +2,194 @@
 
 @section('title', 'Panel Recepcionista')
 
-@section('styles')
-<style>
-    /* Inherits all shared tokens from layouts/app.blade.php */
-    /* Recepcionista: action-btn "Agendar" gets green accent */
-    .action-btn.green-accent { border-color: var(--green); }
-    .action-btn.green-accent:hover { box-shadow: 0 0 0 3px rgba(137,204,49,.2); border-color: var(--green-dark); }
-</style>
-@endsection
-
 @section('content')
-<div class="dash-header">
-    <div>
-        <h1>📋 Panel de Recepcionista</h1>
-        <p>Bienvenido, <strong>{{ Auth::user()->name }}</strong>. Gestiona las citas y pacientes.</p>
-    </div>
-    <span class="dash-badge">📋 Recepcionista</span>
-</div>
-<p class="section-title">Acciones rápidas</p>
-<div class="action-grid">
-    <a href="{{ route('recepcionista.citas.create') }}" class="action-btn">
-        <span class="ab-icon">➕</span>
-        <div><div>Agendar nueva cita</div><small style="font-weight:400;color:#9ca3af;">Crear cita ahora</small></div>
-    </a>
-    <a href="{{ route('recepcionista.citas.index') }}" class="action-btn">
-        <span class="ab-icon">📋</span>
-        <div><div>Ver todas las citas</div><small style="font-weight:400;color:#9ca3af;">{{ $stats['pendientes'] }} pendientes</small></div>
-    </a>
-    <a href="{{ route('patients.index') }}" class="action-btn">
-        <span class="ab-icon">👤</span>
-        <div><div>Ver pacientes</div><small style="font-weight:400;color:#9ca3af;">Perfiles y pagos pendientes</small></div>
-    </a>
-</div>
-<br>
-
-<div class="cards-grid">
-    <div class="stat-card" onclick="toggleCard('card-hoy')">
-        <div class="sc-label">Citas hoy</div>
-        <div class="sc-value">{{ $stats['hoy'] }}</div>
-        <div class="sc-hint">Click para ver detalle</div>
-        <span class="sc-arrow" id="arrow-card-hoy">▼</span>
-        <div class="card-detail" id="card-hoy">
-            @if($stats['citas_hoy']->isEmpty())
-                <p class="detail-empty">Sin citas para hoy.</p>
-            @else
-                <table class="detail-table">
-                    <thead><tr><th>Paciente</th><th>Terapeuta</th><th>Hora</th></tr></thead>
-                    <tbody>
-                        @foreach($stats['citas_hoy'] as $c)
-                        <tr>
-                            <td>{{ $c->patient->nombre_paciente ?? 'Sin paciente' }}</td>
-                            <td>{{ $c->therapist->name ?? '—' }}</td>
-                            <td>{{ \Carbon\Carbon::parse($c->time)->format('H:i') }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @endif
-        </div>
-    </div>
-
-    <div class="stat-card" onclick="toggleCard('card-pendientes')">
-        <div class="sc-label">Pendientes</div>
-        <div class="sc-value">{{ $stats['pendientes'] }}</div>
-        <div class="sc-hint">Click para ver próximas</div>
-        <span class="sc-arrow" id="arrow-card-pendientes">▼</span>
-        <div class="card-detail" id="card-pendientes">
-            @if($stats['proximas']->isEmpty())
-                <p class="detail-empty">Sin citas pendientes.</p>
-            @else
-                <table class="detail-table">
-                    <thead><tr><th>Paciente</th><th>Terapeuta</th><th>Fecha</th></tr></thead>
-                    <tbody>
-                        @foreach($stats['proximas'] as $c)
-                        <tr>
-                            <td>{{ $c->patient->nombre_paciente ?? 'Sin paciente' }}</td>
-                            <td>{{ $c->therapist->name ?? '—' }}</td>
-                            <td>{{ \Carbon\Carbon::parse($c->date)->format('d/m/Y') }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @endif
-        </div>
-    </div>
-
-    <div class="stat-card" onclick="toggleCard('card-completadas')">
-        <div class="sc-label">Completadas</div>
-        <div class="sc-value">{{ $stats['completadas'] }}</div>
-        <div class="sc-hint">Total histórico</div>
-        <span class="sc-arrow" id="arrow-card-completadas">▼</span>
-        <div class="card-detail" id="card-completadas">
-            <p class="detail-empty">{{ $stats['completadas'] }} cita(s) completada(s).</p>
-        </div>
-    </div>
-
-    <div class="stat-card" onclick="toggleCard('card-canceladas')">
-        <div class="sc-label">Canceladas</div>
-        <div class="sc-value">{{ $stats['canceladas'] }}</div>
-        <div class="sc-hint">Total histórico</div>
-        <span class="sc-arrow" id="arrow-card-canceladas">▼</span>
-        <div class="card-detail" id="card-canceladas">
-            <p class="detail-empty">{{ $stats['canceladas'] }} cita(s) cancelada(s).</p>
+<!-- Header con gradiente -->
+<div class="relative overflow-hidden bg-gradient-to-br from-secondary via-secondary-dark to-secondary rounded-2xl shadow-secondary mb-8">
+    <div class="absolute inset-0 bg-black opacity-5"></div>
+    <div class="relative px-6 sm:px-8 py-8 sm:py-10">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center space-x-3 mb-2">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-white">Panel de Recepcionista</h1>
+                </div>
+                <p class="text-white text-opacity-90 text-sm sm:text-base">
+                    Bienvenido, <strong class="font-semibold">{{ Auth::user()->name }}</strong>. Gestiona las citas y pacientes.
+                </p>
+            </div>
+            <div class="px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-full border border-white border-opacity-30">
+                <span class="text-white font-bold text-xs uppercase tracking-wider">📋 Recepcionista</span>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- Acciones rápidas -->
+<div class="mb-8">
+    <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Acciones rápidas</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <a href="{{ route('recepcionista.citas.create') }}" class="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 border-2 border-secondary border-opacity-0 hover:border-opacity-100 hover-lift">
+            <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-secondary-light rounded-lg flex items-center justify-center group-hover:bg-secondary group-hover:shadow-secondary transition-all">
+                    <svg class="w-6 h-6 text-secondary group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900 group-hover:text-secondary transition-colors">Agendar nueva cita</h3>
+                    <p class="text-sm text-gray-500 mt-0.5">Crear cita ahora</p>
+                </div>
+            </div>
+        </a>
 
+        <a href="{{ route('recepcionista.citas.index') }}" class="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 border border-gray-200 hover:border-primary hover-lift">
+            <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-primary-light rounded-lg flex items-center justify-center group-hover:bg-primary group-hover:shadow-primary transition-all">
+                    <svg class="w-6 h-6 text-primary group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900 group-hover:text-primary transition-colors">Ver todas las citas</h3>
+                    <p class="text-sm text-gray-500 mt-0.5">{{ $stats['pendientes'] }} pendientes</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ route('patients.index') }}" class="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 border border-gray-200 hover:border-blue-500 hover-lift">
+            <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-500 transition-all">
+                    <svg class="w-6 h-6 text-blue-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900 group-hover:text-blue-500 transition-colors">Ver pacientes</h3>
+                    <p class="text-sm text-gray-500 mt-0.5">Perfiles y pagos</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Estadísticas -->
+<div class="mb-8">
+    <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Resumen de hoy</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card: Citas hoy -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover-lift" onclick="toggleCard('card-hoy')">
+            <div class="p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Citas hoy</p>
+                        <p class="text-3xl font-extrabold text-primary mt-2">{{ $stats['hoy'] }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Click para detalles</p>
+                    </div>
+                    <div class="w-12 h-12 bg-primary-light rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-100">
+                <div id="card-hoy" class="hidden p-4 bg-gray-50">
+                    @if($stats['citas_hoy']->isEmpty())
+                        <p class="text-sm text-gray-500 text-center py-2">Sin citas para hoy.</p>
+                    @else
+                        <div class="space-y-2">
+                            @foreach($stats['citas_hoy'] as $c)
+                                <div class="flex items-center justify-between text-sm bg-white p-2 rounded">
+                                    <span class="font-medium text-gray-700">{{ $c->patient->nombre_paciente ?? 'Sin paciente' }}</span>
+                                    <span class="text-gray-500">{{ \Carbon\Carbon::parse($c->time)->format('H:i') }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <!-- Card: Pendientes -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover-lift" onclick="toggleCard('card-pendientes')">
+            <div class="p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Pendientes</p>
+                        <p class="text-3xl font-extrabold text-amber-500 mt-2">{{ $stats['pendientes'] }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Click para próximas</p>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-100">
+                <div id="card-pendientes" class="hidden p-4 bg-gray-50">
+                    @if($stats['proximas']->isEmpty())
+                        <p class="text-sm text-gray-500 text-center py-2">Sin citas pendientes.</p>
+                    @else
+                        <div class="space-y-2">
+                            @foreach($stats['proximas']->take(5) as $c)
+                                <div class="flex items-center justify-between text-sm bg-white p-2 rounded">
+                                    <span class="font-medium text-gray-700">{{ $c->patient->nombre_paciente ?? 'Sin paciente' }}</span>
+                                    <span class="text-gray-500">{{ \Carbon\Carbon::parse($c->date)->format('d/m/Y') }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <!-- Card: Completadas -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover-lift">
+            <div class="p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Completadas</p>
+                        <p class="text-3xl font-extrabold text-secondary mt-2">{{ $stats['completadas'] }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Total histórico</p>
+                    </div>
+                    <div class="w-12 h-12 bg-secondary-light rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card: Canceladas -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover-lift">
+            <div class="p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Canceladas</p>
+                        <p class="text-3xl font-extrabold text-gray-400 mt-2">{{ $stats['canceladas'] }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Total histórico</p>
+                    </div>
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
 function toggleCard(id) {
-    document.getElementById(id).classList.toggle('open');
-    document.getElementById('arrow-' + id).closest('.stat-card').classList.toggle('open');
+    const element = document.getElementById(id);
+    element.classList.toggle('hidden');
 }
 </script>
 @endsection
