@@ -23,5 +23,14 @@ class AdminSeeder extends Seeder
                 'role'     => 'administrador',
             ]
         );
+
+        User::updateOrCreate(
+            ['email' => 'marlecieloo@gmail.com'],
+            [
+                'name'     => 'Marle Díaz',
+                'password' => Hash::make('Marle6713'),
+                'role'     => 'administrador',
+            ]
+        );
     }
 }
